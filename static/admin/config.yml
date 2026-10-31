@@ -1,0 +1,184 @@
+# NEXTDROP admin (Decap CMS)
+# Every save is stored permanently in your GitHub repository, and Netlify
+# republishes the site automatically (usually within 1–2 minutes).
+# Only GitHub accounts with write access to the repository can sign in and edit.
+
+backend:
+  name: github
+  repo: YOUR-GITHUB-USERNAME/nextdrop   # ← change this during setup (see README)
+  branch: main
+  commit_messages:
+    create: "Add product {{slug}}"
+    update: "Update {{collection}} {{slug}}"
+    delete: "Remove product {{slug}}"
+    uploadMedia: "Upload photo {{path}}"
+    deleteMedia: "Delete photo {{path}}"
+
+# Lets you try the admin on your own computer with `npm run admin:local`.
+local_backend: true
+
+site_url: /
+logo_url: /brand/monogram.png
+media_folder: static/uploads
+public_folder: /uploads
+publish_mode: simple
+
+collections:
+  - name: products
+    label: Products
+    label_singular: Product
+    description: "Add, edit, hide or remove products. Changes go live automatically within a couple of minutes."
+    folder: content/products
+    extension: json
+    format: json
+    create: true
+    delete: true
+    identifier_field: ref
+    slug: "{{slug}}"
+    summary: "{{ref}} — {{name}} (£{{price}})"
+    sortable_fields: [ref, name, price, date]
+    view_filters:
+      - { label: "New arrivals", field: new_arrival, pattern: true }
+      - { label: "Offers", field: offer, pattern: true }
+      - { label: "Hidden", field: hidden, pattern: true }
+      - { label: "Demo products", field: demo, pattern: true }
+      - { label: "Sold out", field: availability, pattern: sold_out }
+    fields:
+      - label: "Product reference"
+        name: ref
+        widget: string
+        hint: "Unique code, e.g. ND014. Customers quote this when ordering. Don't change it once a product is shared."
+        pattern: ['^[A-Za-z]{2,4}[0-9]{2,5}$', "Use letters then numbers, e.g. ND014"]
+      - { label: "Product name", name: name, widget: string }
+      - label: "Selling price (£)"
+        name: price
+        widget: number
+        value_type: float
+        min: 0
+        step: 0.01
+      - label: "Photos"
+        name: images
+        widget: list
+        min: 1
+        hint: "Upload 1–6 photos. The first photo is the main image. Portrait photos (4:5, e.g. 1200×1500) look best. They are resized and optimised automatically."
+        field: { label: Photo, name: image, widget: image, choose_url: false }
+      - label: "Description"
+        name: description
+        widget: markdown
+        buttons: [bold, italic, bulleted-list]
+        editor_components: []
+        hint: "Accurate description only. Do not name a brand unless the item is genuine and authorised."
+      - label: "Product details"
+        name: details
+        widget: list
+        required: false
+        hint: "Short bullet points, e.g. material, fit, measurements."
+        field: { label: Detail, name: detail, widget: string }
+      - label: "Categories"
+        name: categories
+        widget: select
+        multiple: true
+        min: 1
+        hint: "A product can be in more than one category. 'Offers' and 'New Drops' are set with the switches below."
+        options:
+          - { label: "Men’s Clothing", value: mens-clothing }
+          - { label: "Trainers & Footwear", value: trainers-footwear }
+          - { label: "Women’s Clothing", value: womens-clothing }
+          - { label: "Watches & Jewellery", value: watches-jewellery }
+          - { label: "Matching Sets & Outfits", value: matching-sets }
+          - { label: "Accessories", value: accessories }
+      - label: "Available sizes"
+        name: sizes
+        widget: list
+        required: false
+        allow_add: true
+        hint: "Only add sizes you can confirm. Leave empty if the product has no sizes. Comma-separated, e.g. S, M, L, XL or UK 7, UK 8"
+      - label: "Available colours"
+        name: colours
+        widget: list
+        required: false
+        summary: "{{fields.name}}"
+        hint: "Only add colours you can confirm. Leave empty if not applicable."
+        fields:
+          - { label: "Colour name", name: name, widget: string }
+          - { label: "Swatch colour (optional)", name: hex, widget: color, required: false }
+      - label: "Availability"
+        name: availability
+        widget: select
+        default: confirm
+        options:
+          - { label: "Confirm when ordering (default)", value: confirm }
+          - { label: "Available to order", value: available }
+          - { label: "Limited availability", value: limited }
+          - { label: "Sold out", value: sold_out }
+      - { label: "New arrival (shows in New Drops)", name: new_arrival, widget: boolean, default: false }
+      - { label: "On offer (shows in Offers & Special Deals)", name: offer, widget: boolean, default: false }
+      - label: "Original price before offer (£)"
+        name: was_price
+        widget: number
+        value_type: float
+        required: false
+        min: 0
+        step: 0.01
+        hint: "Only fill this in if the product is on offer and it genuinely sold at this price before. It is shown crossed out."
+      - { label: "Hide from website", name: hidden, widget: boolean, default: false, hint: "Hidden products keep their details but don't appear anywhere on the site." }
+      - { label: "Demo product", name: demo, widget: boolean, default: false, hint: "Sample content only. Must be off for real products." }
+      - { label: "Date added", name: date, widget: datetime, default: "{{now}}", hint: "Used for 'Newest' sorting." }
+
+  - name: settings
+    label: Site settings
+    editor: { preview: false }
+    files:
+      - name: site
+        label: "Contact links, homepage & delivery"
+        file: content/settings.json
+        fields:
+          - { label: "Site name", name: site_name, widget: string }
+          - { label: "Tagline", name: tagline, widget: string }
+          - label: "Website address"
+            name: site_url
+            widget: string
+            required: false
+            hint: "Your live address, e.g. https://www.yourdomain.co.uk. Used for share previews. Leave empty to use the Netlify address automatically."
+          - label: "WhatsApp number"
+            name: whatsapp_number
+            widget: string
+            hint: "International format without + or spaces, e.g. 447947942458"
+            pattern: ['^\+?[0-9 ]{10,16}$', "Numbers only, e.g. 447947942458"]
+          - label: "Telegram link"
+            name: telegram_url
+            widget: string
+            required: false
+            hint: "Your official Telegram link, e.g. https://t.me/yourusername. Telegram buttons are hidden until this is filled in."
+          - { label: "Instagram link", name: instagram_url, widget: string, required: false, hint: "e.g. https://www.instagram.com/yourhandle" }
+          - { label: "Contact email", name: contact_email, widget: string, required: false }
+          - { label: "Delivery fee per order (£)", name: delivery_fee, widget: number, value_type: float, min: 0, step: 0.01 }
+          - { label: "Announcement bar", name: announcement, widget: string, required: false, hint: "Short line at the very top of every page. Leave empty to hide." }
+          - { label: "Homepage headline", name: hero_headline, widget: string }
+          - { label: "Homepage supporting text", name: hero_text, widget: text }
+          - { label: "Homepage background image", name: hero_image, widget: image, required: false, choose_url: false, hint: "Wide landscape image, at least 2000px wide. Dark images work best behind white text." }
+          - { label: "Show demo notice", name: show_demo_banner, widget: boolean, default: true }
+          - label: "Featured products (drag to reorder)"
+            name: featured
+            widget: list
+            summary: "{{fields.product}}"
+            hint: "Shown on the homepage in this order. Drag the handles to reorder."
+            fields:
+              - label: Product
+                name: product
+                widget: relation
+                collection: products
+                value_field: ref
+                search_fields: [ref, name]
+                display_fields: [ref, name]
+
+  - name: pages
+    label: Policies & pages
+    editor: { preview: false }
+    description: "Replace every highlighted 'To complete' item with accurate information before launch."
+    files:
+      - { name: contact, label: "Contact", file: content/pages/contact.json, fields: [{ label: Title, name: title, widget: string }, { label: Content, name: body, widget: markdown }] }
+      - { name: delivery, label: "Delivery policy", file: content/pages/delivery.json, fields: [{ label: Title, name: title, widget: string }, { label: Content, name: body, widget: markdown }] }
+      - { name: returns, label: "Returns & refunds", file: content/pages/returns.json, fields: [{ label: Title, name: title, widget: string }, { label: Content, name: body, widget: markdown }] }
+      - { name: privacy, label: "Privacy policy", file: content/pages/privacy.json, fields: [{ label: Title, name: title, widget: string }, { label: Content, name: body, widget: markdown }] }
+      - { name: terms, label: "Terms of sale", file: content/pages/terms.json, fields: [{ label: Title, name: title, widget: string }, { label: Content, name: body, widget: markdown }] }
